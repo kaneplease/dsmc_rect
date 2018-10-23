@@ -3,4 +3,4 @@ project(dsmc_rect)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(dsmc_rect main.cpp mydef.h)
+add_executable(dsmc_rect main.cpp mydef.h MyDSMC.cpp MyDSMC.h)

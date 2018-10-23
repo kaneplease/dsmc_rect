@@ -16,6 +16,7 @@
 
 /*-------------------------------------------------関数の宣言--------------*/
 //int body_collision(int mol, double dtfly, double part_x, double part_y, double part_cx, double part_cy, double part_hit[7]);
+int dsmc(double v0, double akn, double dt);
 int particle_injection(double xbuf1, double xbuf2, double ybuf1, double ybuf2, double part_xy[][2], double part_c[][3]);
 int re_indexing(double part_xy[][2], double part_c[][3], int lc[][my], int lcr[nmax], int  lc0[][my], int i_j_cel[][2]);
 int collision(double part_xy[][2], double part_c[][3], double col[mx][my], int lc[][my], int lcr[nmax], int lc0[][my]);
@@ -40,11 +41,11 @@ const int flag_body_rotate = 0;
 
 //Flow Condition
 const double rgas = 287.0;
-const double v0 = 8000.0;
+//const double v0 = 8000.0;
 const double t0 = 200.0;
 const double d = 0.1;
 const double twall = 200.0;
-const double akn = 0.4;
+//const double akn = 0.4;
 const double vref = sqrt(2.0*rgas*t0);
 const double tref = d / vref;
 const double r_uni = 8.314;						//一般気体定数
@@ -125,12 +126,6 @@ const int nlp = 100;
 //set n*
 const int ns = 20000;
 
-//dtを決定する
-const double dtv = (d*fmin(dx, dy) / (v0 + sqrt(2.0*rgas*t0))) / tref;
-const double dtc = 0.2*akn;
-//二つのうち小さい方を採用
-const double dt = fmin(dtv, dtc);
-
 //Gmaxを定義する
 const double fgmax = 10.0;
 const double gmax = fgmax*sqrt(rgas*t0) / vref;
@@ -183,7 +178,25 @@ double ybody_force_y[2][B_mx] = {};
 double ybody_energy[2][B_mx] = {};
 
 
-int main()
+int main(){
+    for (double v0 = 500; v0 < 10000; v0 += 100){
+        for (double akn = 0.1; akn < 1.0; akn += 0.1){
+            //dtを決定する
+            const double dtv = (d*fmin(dx, dy) / (v0 + sqrt(2.0*rgas*t0))) / tref;
+            const double dtc = 0.2*akn;
+//二つのうち小さい方を採用
+            const double dt = fmin(dtv, dtc);
+            dsmc(v0, akn, dt);
+        }
+    }
+}
+
+
+
+
+
+//  卒論の時のmain関数をを全て関数化してしまう
+int dsmc(double v0, double akn, double dt)
 {
 
     //時間計測
@@ -566,88 +579,101 @@ int main()
     //																(6) Final Result
     printf("F = %e\nCd = %f\n", force, cd);
     printf("Torque_ave = %e\n", torque_ave);
-
-    std::ofstream ofs("Result.data", std::ios::out | std::ios::trunc);
-    for (int i = 1; i <= nmol; i++)
-    {
-        ofs << particle_x_y[i][0] << " " << particle_x_y[i][1] << " " << std::endl;
-    }
+//
+//    std::ofstream ofs("Result.data", std::ios::out | std::ios::trunc);
+//    for (int i = 1; i <= nmol; i++)
+//    {
+//        ofs << particle_x_y[i][0] << " " << particle_x_y[i][1] << " " << std::endl;
+//    }
+//
+//    std::ofstream ofs_density("density.data", std::ios::out | std::ios::trunc);
+//    for (int i = 0; i < mx; i++)
+//    {
+//        for (int j = 0; j < my; j++)
+//        {
+//            ofs_density << xgrid[i][j] << " " << ygrid[i][j] << " " << grid_density[i][j] / (double(ns) * dx * dy) << std::endl;
+//        }
+//        ofs_density << std::endl;
+//    }
+//
+//
+//    std::ofstream ofs_velocity("velocity.data", std::ios::out | std::ios::trunc);
+//    for (int i = 1; i <= nmol; i++)
+//    {
+//        ofs_velocity << velocity_data[i] << std::endl;
+//    }
+//
+//    std::ofstream ofs_press("body_pressure.data", std::ios::out | std::ios::trunc);
+//    {
+//        for (int i = 0; i < B_my; i++)
+//        {
+//            ofs_press << body_ygrid[i] << " " << xbody_force_x[0][i] * dt*nlast*d / vref << " " << xbody_force_y[0][i] * dt*nlast*d / vref << std::endl;
+//        }
+//        ofs_press << std::endl;
+//        for (int i = 0; i < B_my; i++)
+//        {
+//            ofs_press << body_ygrid[i] << " " << xbody_force_x[1][i] * dt*nlast*d / vref << " " << xbody_force_y[1][i] * dt*nlast*d / vref << std::endl;
+//        }
+//        ofs_press << std::endl;
+//        for (int i = 0; i < B_mx; i++)
+//        {
+//            ofs_press << body_xgrid[i] << " " << ybody_force_x[0][i] * dt*nlast*d / vref << " " << ybody_force_y[0][i] * dt*nlast*d / vref << std::endl;
+//        }
+//        ofs_press << std::endl;
+//        for (int i = 0; i < B_mx; i++)
+//        {
+//            ofs_press << body_xgrid[i] << " " << ybody_force_x[1][i] * dt*nlast*d / vref << " " << ybody_force_y[1][i] * dt*nlast*d / vref << std::endl;
+//        }
+//        ofs_press << std::endl;
+//    }
+//
+//    std::ofstream ofs_energy("body_energy.data", std::ios::out | std::ios::trunc);
+//    {
+//        for (int i = 0; i < B_my; i++)
+//        {
+//            ofs_energy << body_ygrid[i] << " " << xbody_energy[0][i] *dt*nlast*d/vref << std::endl;
+//        }
+//        ofs_energy << std::endl;
+//        for (int i = 0; i < B_my; i++)
+//        {
+//            ofs_energy << body_ygrid[i] << " " << xbody_energy[1][i] * dt*nlast*d / vref << std::endl;
+//        }
+//        ofs_energy << std::endl;
+//        for (int i = 0; i < B_mx; i++)
+//        {
+//            ofs_energy << body_xgrid[i] << " " << ybody_energy[0][i] * dt*nlast*d / vref << std::endl;
+//        }
+//        ofs_energy << std::endl;
+//        for (int i = 0; i < B_mx; i++)
+//        {
+//            ofs_energy << body_xgrid[i] << " " << ybody_energy[1][i] * dt*nlast*d / vref << std::endl;
+//        }
+//        ofs_energy << std::endl;
+//    }
+//
+//    std::ofstream ofs_theta("body_theta.data", std::ios::out | std::ios::trunc);
+//    for (int i = 0; i <= nlast; i++)
+//    {
+//        ofs_theta << body_theta_list[i][0] << " " << body_theta_list[i][1] << " " << std::endl;
+//    }
+//
+//    std::ofstream ofs_etc("body_etc.data", std::ios::out | std::ios::trunc);
+//    ofs_etc << "force" << " " << force << std::endl;
+//    ofs_etc << "cd" << " " << cd  << std::endl;
+//    ofs_etc << "torque_ave" << torque_ave << std::endl;
 
     std::ofstream ofs_density("density.data", std::ios::out | std::ios::trunc);
     for (int i = 0; i < mx; i++)
     {
         for (int j = 0; j < my; j++)
         {
-            ofs_density << xgrid[i][j] << " " << ygrid[i][j] << " " << grid_density[i][j] / (double(ns) * dx * dy) << std::endl;
+            if(j == my - 1 && i == mx - 1){
+                ofs_density << grid_density[i][j] / (double(ns) * dx * dy) << std::endl;
+            }else{
+                ofs_density << grid_density[i][j] / (double(ns) * dx * dy) << ",";
+            }
         }
-        ofs_density << std::endl;
     }
-
-
-    std::ofstream ofs_velocity("velocity.data", std::ios::out | std::ios::trunc);
-    for (int i = 1; i <= nmol; i++)
-    {
-        ofs_velocity << velocity_data[i] << std::endl;
-    }
-
-    std::ofstream ofs_press("body_pressure.data", std::ios::out | std::ios::trunc);
-    {
-        for (int i = 0; i < B_my; i++)
-        {
-            ofs_press << body_ygrid[i] << " " << xbody_force_x[0][i] * dt*nlast*d / vref << " " << xbody_force_y[0][i] * dt*nlast*d / vref << std::endl;
-        }
-        ofs_press << std::endl;
-        for (int i = 0; i < B_my; i++)
-        {
-            ofs_press << body_ygrid[i] << " " << xbody_force_x[1][i] * dt*nlast*d / vref << " " << xbody_force_y[1][i] * dt*nlast*d / vref << std::endl;
-        }
-        ofs_press << std::endl;
-        for (int i = 0; i < B_mx; i++)
-        {
-            ofs_press << body_xgrid[i] << " " << ybody_force_x[0][i] * dt*nlast*d / vref << " " << ybody_force_y[0][i] * dt*nlast*d / vref << std::endl;
-        }
-        ofs_press << std::endl;
-        for (int i = 0; i < B_mx; i++)
-        {
-            ofs_press << body_xgrid[i] << " " << ybody_force_x[1][i] * dt*nlast*d / vref << " " << ybody_force_y[1][i] * dt*nlast*d / vref << std::endl;
-        }
-        ofs_press << std::endl;
-    }
-
-    std::ofstream ofs_energy("body_energy.data", std::ios::out | std::ios::trunc);
-    {
-        for (int i = 0; i < B_my; i++)
-        {
-            ofs_energy << body_ygrid[i] << " " << xbody_energy[0][i] *dt*nlast*d/vref << std::endl;
-        }
-        ofs_energy << std::endl;
-        for (int i = 0; i < B_my; i++)
-        {
-            ofs_energy << body_ygrid[i] << " " << xbody_energy[1][i] * dt*nlast*d / vref << std::endl;
-        }
-        ofs_energy << std::endl;
-        for (int i = 0; i < B_mx; i++)
-        {
-            ofs_energy << body_xgrid[i] << " " << ybody_energy[0][i] * dt*nlast*d / vref << std::endl;
-        }
-        ofs_energy << std::endl;
-        for (int i = 0; i < B_mx; i++)
-        {
-            ofs_energy << body_xgrid[i] << " " << ybody_energy[1][i] * dt*nlast*d / vref << std::endl;
-        }
-        ofs_energy << std::endl;
-    }
-
-    std::ofstream ofs_theta("body_theta.data", std::ios::out | std::ios::trunc);
-    for (int i = 0; i <= nlast; i++)
-    {
-        ofs_theta << body_theta_list[i][0] << " " << body_theta_list[i][1] << " " << std::endl;
-    }
-
-    std::ofstream ofs_etc("body_etc.data", std::ios::out | std::ios::trunc);
-    ofs_etc << "force" << " " << force << std::endl;
-    ofs_etc << "cd" << " " << cd  << std::endl;
-    ofs_etc << "torque_ave" << torque_ave << std::endl;
 
 
     //時間計測
