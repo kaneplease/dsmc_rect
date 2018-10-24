@@ -17,7 +17,7 @@
 
 class MyDSMC {
 public:
-    MyDSMC();
+    MyDSMC(double v0_rec, double akn_rec);
     int dsmc();
 
 private:

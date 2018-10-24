@@ -12,17 +12,19 @@
 #include "mydef.h"		//define を集めてある場所
 #include "MyDSMC.h"
 
-MyDSMC::MyDSMC () {
+MyDSMC::MyDSMC (double v0_rec, double akn_rec) {
     //物体の回転はあり？なし？
     flag_body_rotate = 0;
 
 //Flow Condition
     rgas = 287.0;
-    v0 = 8000.0;
+    //v0 = 8000.0;
+    v0 = v0_rec;
     t0 = 200.0;
     d = 0.1;
     twall = 200.0;
-    akn = 0.4;
+    //akn = 0.4;
+    akn = akn_rec;
     vref = sqrt(2.0*rgas*t0);
     tref = d / vref;
     r_uni = 8.314;						//一般気体定数
@@ -480,6 +482,9 @@ int MyDSMC::dsmc()
         for (int j = 0; j < B_my; j++)
         {
             sum_body_momentum += xbody_force_x[i][j];
+            if (xbody_force_x[i][j] > 1.0e+10){
+                std::cout << "x" << i << "," << j << std::endl;
+            }
         }
     }
     for (int i = 0; i < 2; i++)
@@ -487,6 +492,9 @@ int MyDSMC::dsmc()
         for (int j = 0; j < B_mx; j++)
         {
             sum_body_momentum += ybody_force_x[i][j];
+            if (xbody_force_y[i][j] > 1.0e+10){
+                std::cout << "y" << i << "," << j << std::endl;
+            }
         }
     }
     double force = sum_body_momentum / (dt*nlast);
@@ -509,11 +517,11 @@ int MyDSMC::dsmc()
     printf("F = %e\nCd = %f\n", force, cd);
     printf("Torque_ave = %e\n", torque_ave);
 //
-//    std::ofstream ofs("Result.data", std::ios::out | std::ios::trunc);
-//    for (int i = 1; i <= nmol; i++)
-//    {
-//        ofs << particle_x_y[i][0] << " " << particle_x_y[i][1] << " " << std::endl;
-//    }
+    std::ofstream ofs("Result.data", std::ios::out | std::ios::trunc);
+    for (int i = 1; i <= nmol; i++)
+    {
+        ofs << particle_x_y[i][0] << " " << particle_x_y[i][1] << " " << std::endl;
+    }
 //
 //    std::ofstream ofs_density("density.data", std::ios::out | std::ios::trunc);
 //    for (int i = 0; i < mx; i++)

@@ -16,7 +16,14 @@
 #include "MyDSMC.h"
 
 int main(){
-    MyDSMC calc;
+//    for(double v = 1000; v <= 10000; v += 500){
+//        for(double akn = 0.1; akn <= 1.0; akn += 0.1){
+//            MyDSMC calc(v, akn);
+//            calc.dsmc();
+//        }
+//    }
+    MyDSMC calc(8000, 0.4);
     calc.dsmc();
+    std::cout << "finished" << std::endl;
     return 0;
 }
