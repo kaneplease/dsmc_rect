@@ -16,5 +16,6 @@
 #define mdy 200
 #define B_mx 50
 #define B_my 50
+#define sides 4
 
 #endif //DSMC_RECT_MYDEF_H
