@@ -34,14 +34,20 @@ private:
     double fgmax, gmax, mass_particle, mass_part_2;	    //無次元化はする？？
     int nmol;												//<----危ないかも
 
-//////////////////大きな配列の置き場所/////////////////////////
+    int lc[mx][my], lc0[mx][my];
+    std::vector<int> lcr;
+    std::vector<std::vector<int>> i_j_cel;
 
-    double (*particle_x_y)[2] = new double[nmax][2];				//粒子の位置 [x座標][y座標]		ただし、[0]の値は使わないとする。
-    double (*particle_x_y_new)[2] = new double[nmax][2];
-    double (*particle_c)[3] = new double[nmax][3];				//粒子の速度 [速度u][速度v]		上と同じ
-    double (*particle_c_new)[3] = new double[nmax][3];
-    double (*grid_density)[my] = new double[mx][my];					//グリッド内の粒子密度
-    double (*velocity_data) = new double[nmax];
+//////////////////大きな配列の置き場所/////////////////////////
+    std::vector<std::vector<double>> particle_x_y, particle_x_y_new, particle_c, particle_c_new, grid_density;
+    std::vector<double> velocity_data;
+
+//    double (*particle_x_y)[2] = new double[nmax][2];				//粒子の位置 [x座標][y座標]		ただし、[0]の値は使わないとする。
+//    double (*particle_x_y_new)[2] = new double[nmax][2];
+//    double (*particle_c)[3] = new double[nmax][3];				//粒子の速度 [速度u][速度v]		上と同じ
+//    double (*particle_c_new)[3] = new double[nmax][3];
+//    double (*grid_density)[my] = new double[mx][my];					//グリッド内の粒子密度
+//    double (*velocity_data) = new double[nmax];
 
 //格子の座標を定義
     double xgrid[mx + 1][my + 1], ygrid[mx + 1][my + 1];
@@ -58,12 +64,12 @@ private:
 
     /*-------------------------------------------------関数の宣言--------------*/
 //int body_collision(int mol, double dtfly, double part_x, double part_y, double part_cx, double part_cy, double part_hit[7]);
-    int particle_injection(double xbuf1, double xbuf2, double ybuf1, double ybuf2, double part_xy[][2], double part_c[][3]);
-    int re_indexing(double part_xy[][2], double part_c[][3], int lc[][my], int lcr[nmax], int  lc0[][my], int i_j_cel[][2]);
-    int collision(double part_xy[][2], double part_c[][3], double col[mx][my], int lc[][my], int lcr[nmax], int lc0[][my]);
+    int particle_injection(double xbuf1, double xbuf2, double ybuf1, double ybuf2, std::vector<std::vector<double>> &part_xy, std::vector<std::vector<double>> &part_c);
+    int re_indexing(std::vector<std::vector<double>> &part_xy, std::vector<std::vector<double>> &part_c, int lc[][my],std::vector<int> &lcr, int lc0[][my], std::vector<std::vector<int>> &i_j_cel);
+    int collision(std::vector<std::vector<double>> &part_xy, std::vector<std::vector<double>> &part_c, double col[mx][my], int lc[][my], std::vector<int> &lcr, int lc0[][my]);
     double uniform_random();
     double min_thit(double thit[4]);
-    double injection_update(double xzone1, double xzone2, double yzone1, double yzone2, double part_xy[][2], double part_c[][3]);
+    double injection_update(double xzone1, double xzone2, double yzone1, double yzone2, std::vector<std::vector<double>> &part_xy, std::vector<std::vector<double>> &part_c);
     double body_force_and_heat(double part_hit[], double c_x, double c_y, double xbody_force_x[][B_my], double xbody_force_y[][B_my], double xbody_energy[][B_my], double ybody_force_x[][B_mx], double ybody_force_y[][B_mx], double ybody_energy[][B_mx]);
     double line_body_collsion(int mol, double body_point_pair[][2][2], double dtfly, double part_x, double part_y, double part_cx, double part_cy, double part_hit[]);
     double rotation(double theta, double xy[], double after_xy[]);

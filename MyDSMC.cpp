@@ -90,6 +90,25 @@ MyDSMC::MyDSMC (double v0_rec, double akn_rec) {
 //                                   { { 0.145,-0.35 },{ 0.145,-0.05 } },
 //                                   { { 0.145,-0.05 },{ -0.15,-0.05 } },
 //                                   { { -0.15,-0.05 },{ -0.15,0.05 } } };
+    particle_x_y.resize(nmax);
+    particle_x_y_new.resize(nmax);
+    particle_c.resize(nmax);
+    particle_c_new.resize(nmax);
+    grid_density.resize(mx);
+    velocity_data.resize(nmax);
+    lcr.resize(nmax);
+    i_j_cel.resize(nmax);
+    for(int i = 0; i<nmax; i++){
+        particle_x_y[i].resize(2);
+        particle_x_y_new[i].resize(2);
+        particle_c[i].resize(3);
+        particle_c_new[i].resize(3);
+        i_j_cel[i].resize(2);
+    }
+    for(int i = 0; i<mx; i++){
+        grid_density[i].resize(my);
+    }
+
 //物体の慣性モーメント
     I = 1.0e-11;							//質量の無次元化はする？
 
@@ -403,12 +422,9 @@ int MyDSMC::dsmc()
         //     grid_density : 最後にグリッド内の粒子個数を保存する
         /*......................................................................*/
 
-
-        int(*lc)[my] = new int[mx][my];
-        int(*lc0)[my] = new int[mx][my];
-        int *lcr;
-        lcr = new int[nmax];
-        int(*i_j_cel)[2] = new int[nmax][2];
+//        int lc[mx][my], lc0[mx][my];
+//        std::vector<int> lcr(nmax);
+//        std::vector<std::vector<int>> i_j_cel(nmax, std::vector<int>(2));
 
         //初期化
         for (int i = 0; i < mx; i++)
@@ -452,10 +468,10 @@ int MyDSMC::dsmc()
             }
         }
 
-        delete[] lc;
-        delete[] lc0;
-        delete[] lcr;
-        delete[] i_j_cel;
+//        delete[] lc;
+//        delete[] lc0;
+//        delete[] lcr;
+//        delete[] i_j_cel;
 
         //速度のデータを集める
 
@@ -472,7 +488,6 @@ int MyDSMC::dsmc()
             printf("                     d_theta = %e\n", d_theta * 180 / M_PI);
             printf("                  body_theta = %f\n", body_theta * 180 / M_PI);
         }
-
     }
 
     //															5.9 calculate Cd
@@ -482,7 +497,7 @@ int MyDSMC::dsmc()
         for (int j = 0; j < B_my; j++)
         {
             sum_body_momentum += xbody_force_x[i][j];
-            if (xbody_force_x[i][j] > 1.0e+10){
+            if (xbody_force_x[i][j] > 1.0e+1){
                 std::cout << "x" << i << "," << j << std::endl;
             }
         }
@@ -492,7 +507,7 @@ int MyDSMC::dsmc()
         for (int j = 0; j < B_mx; j++)
         {
             sum_body_momentum += ybody_force_x[i][j];
-            if (xbody_force_y[i][j] > 1.0e+10){
+            if (xbody_force_y[i][j] > 1.0e+1){
                 std::cout << "y" << i << "," << j << std::endl;
             }
         }
@@ -615,7 +630,7 @@ int MyDSMC::dsmc()
 
     //時間計測
     clock_t end = clock();     // 終了時間
-    std::cout << "main_runtime = " << (double)(end - start) / CLOCKS_PER_SEC << "sec.\n";
+    std::cout << "main_runtime = " << (double)(end - start) / CLOCKS_PER_SEC << "sec." << std::endl;
 
     return 0;
 }
@@ -796,7 +811,7 @@ int MyDSMC::dsmc()
 //	return 0;
 //}
 
-int MyDSMC::particle_injection(double xbuf1, double xbuf2, double ybuf1, double ybuf2, double part_xy[][2], double part_c[][3])
+int MyDSMC::particle_injection(double xbuf1, double xbuf2, double ybuf1, double ybuf2, std::vector<std::vector<double>> &part_xy, std::vector<std::vector<double>> &part_c)
 {
     //injection from buffer 1
     {
@@ -836,7 +851,7 @@ int MyDSMC::particle_injection(double xbuf1, double xbuf2, double ybuf1, double 
     return 0;
 }
 
-int MyDSMC::re_indexing(double part_xy[][2], double part_c[][3], int lc[][my], int lcr[nmax], int lc0[][my], int i_j_cel[][2])
+int MyDSMC::re_indexing(std::vector<std::vector<double>> &part_xy, std::vector<std::vector<double>> &part_c, int lc[][my],std::vector<int> &lcr, int lc0[][my], std::vector<std::vector<int>> &i_j_cel)
 {
     //粒子mがどこの領域(i,j)の中にあるか判定
     //その個数をlcに格納している
@@ -894,7 +909,7 @@ int MyDSMC::re_indexing(double part_xy[][2], double part_c[][3], int lc[][my], i
     return 0;
 }
 
-int MyDSMC::collision(double part_xy[][2], double part_c[][3], double col[mx][my], int lc[][my], int lcr[nmax], int lc0[][my])
+int MyDSMC::collision(std::vector<std::vector<double>> &part_xy, std::vector<std::vector<double>> &part_c, double col[mx][my], int lc[][my], std::vector<int> &lcr, int lc0[][my])
 {
     for (int i = 0; i < mx; i++)
     {
@@ -992,7 +1007,7 @@ double MyDSMC::min_thit(double thit[4])
     return min;
 }
 
-double MyDSMC::injection_update(double xzone1, double xzone2, double yzone1, double yzone2, double part_xy[][2], double part_c[][3])
+double MyDSMC::injection_update(double xzone1, double xzone2, double yzone1, double yzone2, std::vector<std::vector<double>> &part_xy, std::vector<std::vector<double>> &part_c)
 {
     double ainjec = (xzone2 - xzone1)*(yzone2 - yzone1)*double(ns);
     double ninjec = int(ainjec);
