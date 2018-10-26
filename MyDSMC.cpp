@@ -142,13 +142,26 @@ MyDSMC::MyDSMC (double v0_rec, double akn_rec) {
     dtc = 0.2*akn;
 
     dt = fmin(dtv, dtc);
+
+    //  初期化
+    for(int i = 0; i<2; i++){
+        for(int j = 0; j<B_my; j++){
+            xbody_force_x[i][j] = 0;
+            xbody_force_y[i][j] = 0;
+            xbody_energy[i][j] = 0;
+        }
+        for(int j = 0; j<B_my; j++){
+            ybody_force_x[i][j] = 0;
+            ybody_force_y[i][j] = 0;
+            ybody_energy[i][j] = 0;
+        }
+    }
 }
 
 
 //  卒論の時のmain関数をを全て関数化してしまう
 int MyDSMC::dsmc()
 {
-
     //時間計測
     clock_t start = clock();    // スタート時間
 
@@ -268,8 +281,7 @@ int MyDSMC::dsmc()
 
     /*(4)	Time Marching*/
 
-    int nstep = 1;
-    for (nstep = 1; nstep <= nlast; nstep++)
+    for (int nstep = 1; nstep < nlast; nstep++)
     {
         double time = dt*double(nstep);
 
@@ -290,7 +302,6 @@ int MyDSMC::dsmc()
 //		delete_particle_in_body();
         //check_particle_in_body();
 
-
         //bodyの回転角を格納
         body_theta_list[nstep][0] = time*tref;
         body_theta_list[nstep][1] = body_theta * 180 / M_PI;
@@ -305,7 +316,7 @@ int MyDSMC::dsmc()
             particle_x_y_new[mol][0] = particle_x_y[mol][0] + particle_c[mol][0] * dtfly;
             particle_x_y_new[mol][1] = particle_x_y[mol][1] + particle_c[mol][1] * dtfly;
 
-            double part_hit[7] = {};				//更新するときに新しい値を格納する場所
+            double part_hit[8] = {};				//更新するときに新しい値を格納する場所
 
             line_body_collsion(mol, body_point, dtfly, particle_x_y[mol][0], particle_x_y[mol][1], particle_c[mol][0], particle_c[mol][1], part_hit);
 
@@ -497,9 +508,9 @@ int MyDSMC::dsmc()
         for (int j = 0; j < B_my; j++)
         {
             sum_body_momentum += xbody_force_x[i][j];
-            if (xbody_force_x[i][j] > 1.0e+1){
-                std::cout << "x" << i << "," << j << std::endl;
-            }
+//            if (std::abs(xbody_force_x[i][j]) > 1.0e+1){
+//                std::cout << "x" << i << "," << j << std::endl;
+//            }
         }
     }
     for (int i = 0; i < 2; i++)
@@ -507,9 +518,9 @@ int MyDSMC::dsmc()
         for (int j = 0; j < B_mx; j++)
         {
             sum_body_momentum += ybody_force_x[i][j];
-            if (xbody_force_y[i][j] > 1.0e+1){
-                std::cout << "y" << i << "," << j << std::endl;
-            }
+//            if (std::abs(xbody_force_y[i][j]) > 1.0e+2){
+//                std::cout << "y" << " " << std::abs(xbody_force_y[i][j]) << i << "," << j << std::endl;
+//            }
         }
     }
     double force = sum_body_momentum / (dt*nlast);
@@ -1059,7 +1070,13 @@ double MyDSMC::body_force_and_heat(double part_hit[], double c_x, double c_y, do
     double yhit = part_hit[3];
 
     double momentum_gap_x = mass_part_2*(part_hit[4] - c_x);
+    if(momentum_gap_x > 0.1){
+        std::cout << momentum_gap_x << std::endl;
+    }
     double momentum_gap_y = mass_part_2*(part_hit[5] - c_y);
+    if(momentum_gap_y > 0.1){
+        std::cout << momentum_gap_y << std::endl;
+    }
     double energy_gap = 0.5*mass_part_2*((pow(c_x, 2.0) + pow(c_y, 2.0)) - (pow(part_hit[4], 2.0) + pow(part_hit[5], 2.0)));
 
     //xbodyに衝突したとき
@@ -1067,6 +1084,9 @@ double MyDSMC::body_force_and_heat(double part_hit[], double c_x, double c_y, do
     {
         int i = int(s*B_my);
         xbody_force_x[hit_num - 1][i] += momentum_gap_x;
+        if(std::abs(xbody_force_x[hit_num - 1][i]) > 1.0e+1){
+            std::cout << xbody_force_x[hit_num - 1][i] << "," << momentum_gap_x << std::endl;
+        }
         xbody_force_y[hit_num - 1][i] += momentum_gap_y;
         xbody_energy[hit_num - 1][i] += energy_gap;
     }

@@ -24,6 +24,5 @@ int main(){
 //    }
     MyDSMC calc(8000, 0.4);
     calc.dsmc();
-    std::cout << "finished" << std::endl;
     return 0;
 }
