@@ -3,11 +3,14 @@
 //
 #include <stdio.h>
 #include <cmath>
+#include <cstdio>
 #include <random>
 #include <iostream> //入出力ライブラリ
 #include <fstream> //iostreamのファイル入出力をサポート
 #include <time.h>     // for clock()
 #include <vector>       // ヘッダファイルインクルード
+#include <string>
+
 
 #include "mydef.h"		//define を集めてある場所
 #include "MyDSMC.h"
@@ -56,8 +59,8 @@ MyDSMC::MyDSMC (double v0_rec, double akn_rec) {
 //ybody2 = 0.5;
 
 //物体の大きさ
-    xbody1 = -0.15 ;
-    xbody2 = 0.15 ;
+    xbody1 = -0.05 ;
+    xbody2 = 0.05 ;
     ybody1 = -0.05;
     ybody2 = 0.05;
 
@@ -125,7 +128,7 @@ MyDSMC::MyDSMC (double v0_rec, double akn_rec) {
     nlp = 100;
 
 //set n*
-    ns = 20000;
+    ns = 40000;
 
 //Gmaxを定義する
     fgmax = 10.0;
@@ -264,7 +267,7 @@ int MyDSMC::dsmc()
     printf("\n");
 
     //物体の初期位置の回転
-    double init_theta = M_PI / 3.0;
+    double init_theta = 0;
     double body_omega = 0;
     double d_theta = 0;
     double body_theta = init_theta;					//物体の現在の迎角を格納
@@ -436,6 +439,7 @@ int MyDSMC::dsmc()
 //        int lc[mx][my], lc0[mx][my];
 //        std::vector<int> lcr(nmax);
 //        std::vector<std::vector<int>> i_j_cel(nmax, std::vector<int>(2));
+
 
         //初期化
         for (int i = 0; i < mx; i++)
@@ -625,15 +629,39 @@ int MyDSMC::dsmc()
 //    ofs_etc << "cd" << " " << cd  << std::endl;
 //    ofs_etc << "torque_ave" << torque_ave << std::endl;
 
-    std::ofstream ofs_density("density.data", std::ios::out | std::ios::trunc);
-    for (int i = 0; i < mx; i++)
-    {
-        for (int j = 0; j < my; j++)
-        {
-            if(j == my - 1 && i == mx - 1){
-                ofs_density << grid_density[i][j] / (double(ns) * dx * dy) << std::endl;
-            }else{
-                ofs_density << grid_density[i][j] / (double(ns) * dx * dy) << ",";
+//    std::ofstream ofs_density("density.data", std::ios::out | std::ios::trunc);
+//    for (int i = 0; i < mx; i++)
+//    {
+//        for (int j = 0; j < my; j++)
+//        {
+//            if(j == my - 1 && i == mx - 1){
+//                ofs_density << grid_density[i][j] / (double(ns) * dx * dy) << std::endl;
+//            }else{
+//                ofs_density << grid_density[i][j] / (double(ns) * dx * dy) << ",";
+//            }
+//        }
+//    }
+
+    //それぞれのセルに含まれる粒子の速度を集計
+    //[i, j]にどんどんそこに含まれる粒子の速度を追加していく
+    std::vector<std::vector<std::vector<double>>> vx_in_cell(mx, std::vector<std::vector<double>>(my, std::vector<double>()));
+    std::vector<std::vector<std::vector<double>>> vy_in_cell(mx, std::vector<std::vector<double>>(my, std::vector<double>()));
+    for(int n = 0; n<nmol ;n++){
+        int i = i_j_cel[n][0];
+        int j = i_j_cel[n][1];
+        vx_in_cell[i][j].push_back(particle_c[n][0]);
+        vy_in_cell[i][j].push_back(particle_c[n][1]);
+    }
+    std::string vxfile, vyfile;    //ファイルの名前
+    for(int i=0; i<mx; i++){
+        for(int j=0; j<my; j++){
+            vxfile = "v_in_cell/vx/" + std::to_string(i) + std::to_string(j) + "_x.csv";
+            vyfile = "v_in_cell/vy/" + std::to_string(i) + std::to_string(j) + "_y.csv";
+            std::ofstream ofs_vx(vxfile, std::ios::out | std::ios::app);
+            std::ofstream ofs_vy(vyfile, std::ios::out | std::ios::app);
+            for(int n = 0; n<vx_in_cell[i][j].size(); n++){
+                ofs_vx << vx_in_cell[i][j][n] << std::endl;
+                ofs_vy << vy_in_cell[i][j][n] << std::endl;
             }
         }
     }

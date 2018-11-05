@@ -10,7 +10,6 @@
 #include <random>
 #include <iostream> //入出力ライブラリ
 #include <fstream> //iostreamのファイル入出力をサポート
-#include <time.h>     // for clock()
 #include <vector>       // ヘッダファイルインクルード
 
 #include "mydef.h"		//define を集めてある場所
