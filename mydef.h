@@ -10,10 +10,10 @@
 
 #define nmax 200000						//変動する粒子の個数を十分保持できる程度に大きく取る
 //格子の数
-#define mx 10
-#define my 10
-#define mdx 20
-#define mdy 20
+#define mx 11
+#define my 11
+#define mdx 22
+#define mdy 22
 #define B_mx 50
 #define B_my 50
 #define sides 4

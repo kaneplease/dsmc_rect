@@ -32,6 +32,7 @@ private:
     double dtv, dtc, dt;
     double fgmax, gmax, mass_particle, mass_part_2;	    //無次元化はする？？
     int nmol;												//<----危ないかも
+    int itr_datapick;
 
     int lc[mx][my], lc0[mx][my];
     std::vector<int> lcr;
@@ -81,6 +82,9 @@ private:
     double rotate_collsion_line(double dtheta, double sum_torque);
     double c_new_generate(double a_dash[2], double b_dash[2], double theta_sign, double v_part_new[2]);
     double check_particle_in_body();
+    void output_data();
+    void output_v_data(int nstep);
+    void make_dirs();
 /*-------------------------------------------------------------------------*/
 };
 

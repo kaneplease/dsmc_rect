@@ -14,12 +14,12 @@
 #include "MyDSMC.h"
 
 int main(){
-    double v = 8000;
+    double v = 1000;
     double akn = 0.4;
 
-    for(int i = 0; i<200; i++){
-        MyDSMC calc(v, akn);
-        calc.dsmc();
-    }
+    MyDSMC calc(v, akn);
+    calc.dsmc();
+
     return 0;
 }
+

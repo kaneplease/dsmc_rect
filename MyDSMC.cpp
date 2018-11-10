@@ -10,12 +10,14 @@
 #include <time.h>     // for clock()
 #include <vector>       // ヘッダファイルインクルード
 #include <string>
-
+#include <sys/stat.h>
+#include <sys/types.h> // UNIXディレクトリ作成用
 
 #include "mydef.h"		//define を集めてある場所
 #include "MyDSMC.h"
 
 MyDSMC::MyDSMC (double v0_rec, double akn_rec) {
+
     //物体の回転はあり？なし？
     flag_body_rotate = 0;
 
@@ -36,6 +38,8 @@ MyDSMC::MyDSMC (double v0_rec, double akn_rec) {
     p0 = 8.7704e-6;						//3.2011*10^-2  Pa
     rho = 1.916e-11;
 
+    itr_datapick = 500;
+
 ////計算領域
 //xmin = -5.0;
 //xmax = 5.0;
@@ -45,12 +49,12 @@ MyDSMC::MyDSMC (double v0_rec, double akn_rec) {
 //zmax = 5.0;
 
 //計算領域
-    xmin = -0.5;
-    xmax = 0.5;
-    ymin = -0.5;
-    ymax = 0.5;
-    zmin = -0.5;
-    zmax = 0.5;
+    xmin = -0.55;
+    xmax = 0.55;
+    ymin = -0.55;
+    ymax = 0.55;
+    zmin = -0.55;
+    zmax = 0.55;
 
 ////物体の大きさ
 //xbody1 = -0.5;
@@ -61,8 +65,8 @@ MyDSMC::MyDSMC (double v0_rec, double akn_rec) {
 //物体の大きさ
     xbody1 = -0.05 ;
     xbody2 = 0.05 ;
-    ybody1 = -0.05;
-    ybody2 = 0.05;
+    ybody1 = -0.05 ;
+    ybody2 = 0.05 ;
 
     //body_pointへコピー（頭悪いこれ）
     double dum[sides][2][2]= { { { xbody1,ybody1 },{ xbody1,ybody2 } },
@@ -122,7 +126,7 @@ MyDSMC::MyDSMC (double v0_rec, double akn_rec) {
     body_dy = (ybody2 - ybody1) / double(B_my);
 
 //繰り返し回数
-    nlast = 5000;
+    nlast = 100;
 
 //サンプリングするステップ数
     nlp = 100;
@@ -167,6 +171,8 @@ int MyDSMC::dsmc()
 {
     //時間計測
     clock_t start = clock();    // スタート時間
+    //出力ファイル用のディレクトリ作成
+    make_dirs();
 
     /*(1)	Computationl Conditions*/
     //粒子の諸元を配列に
@@ -503,6 +509,9 @@ int MyDSMC::dsmc()
             printf("                     d_theta = %e\n", d_theta * 180 / M_PI);
             printf("                  body_theta = %f\n", body_theta * 180 / M_PI);
         }
+
+        //                                                          <<addiitonal    v_data_output
+        output_v_data(nstep);
     }
 
     //															5.9 calculate Cd
@@ -546,23 +555,7 @@ int MyDSMC::dsmc()
     //																(6) Final Result
     printf("F = %e\nCd = %f\n", force, cd);
     printf("Torque_ave = %e\n", torque_ave);
-//
-    std::ofstream ofs("Result.data", std::ios::out | std::ios::trunc);
-    for (int i = 1; i <= nmol; i++)
-    {
-        ofs << particle_x_y[i][0] << " " << particle_x_y[i][1] << " " << std::endl;
-    }
-//
-//    std::ofstream ofs_density("density.data", std::ios::out | std::ios::trunc);
-//    for (int i = 0; i < mx; i++)
-//    {
-//        for (int j = 0; j < my; j++)
-//        {
-//            ofs_density << xgrid[i][j] << " " << ygrid[i][j] << " " << grid_density[i][j] / (double(ns) * dx * dy) << std::endl;
-//        }
-//        ofs_density << std::endl;
-//    }
-//
+
 //
 //    std::ofstream ofs_velocity("velocity.data", std::ios::out | std::ios::trunc);
 //    for (int i = 1; i <= nmol; i++)
@@ -642,30 +635,7 @@ int MyDSMC::dsmc()
 //        }
 //    }
 
-    //それぞれのセルに含まれる粒子の速度を集計
-    //[i, j]にどんどんそこに含まれる粒子の速度を追加していく
-    std::vector<std::vector<std::vector<double>>> vx_in_cell(mx, std::vector<std::vector<double>>(my, std::vector<double>()));
-    std::vector<std::vector<std::vector<double>>> vy_in_cell(mx, std::vector<std::vector<double>>(my, std::vector<double>()));
-    for(int n = 0; n<nmol ;n++){
-        int i = i_j_cel[n][0];
-        int j = i_j_cel[n][1];
-        vx_in_cell[i][j].push_back(particle_c[n][0]);
-        vy_in_cell[i][j].push_back(particle_c[n][1]);
-    }
-    std::string vxfile, vyfile;    //ファイルの名前
-    for(int i=0; i<mx; i++){
-        for(int j=0; j<my; j++){
-            vxfile = "v_in_cell/vx/" + std::to_string(i) + std::to_string(j) + "_x.csv";
-            vyfile = "v_in_cell/vy/" + std::to_string(i) + std::to_string(j) + "_y.csv";
-            std::ofstream ofs_vx(vxfile, std::ios::out | std::ios::app);
-            std::ofstream ofs_vy(vyfile, std::ios::out | std::ios::app);
-            for(int n = 0; n<vx_in_cell[i][j].size(); n++){
-                ofs_vx << vx_in_cell[i][j][n] << std::endl;
-                ofs_vy << vy_in_cell[i][j][n] << std::endl;
-            }
-        }
-    }
-
+    output_data();
 
     //時間計測
     clock_t end = clock();     // 終了時間
@@ -1917,3 +1887,69 @@ double MyDSMC::check_particle_in_body()
 //	}
 //
 //}
+
+void MyDSMC::output_data(){
+    std::ofstream ofs("Result.data", std::ios::out | std::ios::trunc);
+    for (int i = 1; i <= nmol; i++)
+    {
+        ofs << particle_x_y[i][0] << " " << particle_x_y[i][1] << " " << std::endl;
+    }
+
+    std::ofstream ofs_density("density.data", std::ios::out | std::ios::trunc);
+    for (int i = 0; i < mx; i++)
+    {
+        for (int j = 0; j < my; j++)
+        {
+            ofs_density << xgrid[i][j] << " " << ygrid[i][j] << " " << grid_density[i][j] / (double(ns) * dx * dy) << std::endl;
+        }
+        ofs_density << std::endl;
+    }
+
+//    output_v_data();
+}
+
+//  毎ステップごとに速度をファイルに出力
+void MyDSMC::output_v_data (int nstep) {
+    //それぞれのセルに含まれる粒子の速度を集計
+    //[i, j]にどんどんそこに含まれる粒子の速度を追加していく
+    std::vector<std::vector<std::vector<double>>> vx_in_cell(mx, std::vector<std::vector<double>>(my, std::vector<double>()));
+    std::vector<std::vector<std::vector<double>>> vy_in_cell(mx, std::vector<std::vector<double>>(my, std::vector<double>()));
+    for(int n = 0; n<nmol ;n++){
+        int i = i_j_cel[n][0];
+        int j = i_j_cel[n][1];
+        vx_in_cell[i][j].push_back(particle_c[n][0]);
+        vy_in_cell[i][j].push_back(particle_c[n][1]);
+    }
+    std::string vxfile, vyfile;    //ファイルの名前
+    for(int i=0; i<mx; i++){
+        for(int j=0; j<my; j++){
+            vxfile = "v_in_cell/vx/t_" + std::to_string(nstep) + "/" + std::to_string(i) + "_" + std::to_string(j) + "_x.csv";
+            vyfile = "v_in_cell/vy/t_" + std::to_string(nstep) + "/"  + std::to_string(i) + "_" + std::to_string(j) + "_y.csv";
+            std::ofstream ofs_vx(vxfile, std::ios::out | std::ios::app);
+            std::ofstream ofs_vy(vyfile, std::ios::out | std::ios::app);
+            for(int n = 0; n<vx_in_cell[i][j].size(); n++){
+                ofs_vx << vx_in_cell[i][j][n] << std::endl;
+                ofs_vy << vy_in_cell[i][j][n] << std::endl;
+            }
+        }
+    }
+}
+
+void MyDSMC::make_dirs () {
+    struct stat st;     //statの返り値の構造体を格納する変数
+    std::string vxfile, vyfile;
+    for(int i = 1; i < itr_datapick; i++){
+        std::string time_dirx = "v_in_cell/vx/";
+        std::string time_diry = "v_in_cell/vy/";
+        time_dirx += "t_" + std::to_string(i);
+        time_diry += "t_" + std::to_string(i);
+        if(stat(time_dirx.c_str(), &st) != 0){
+            mkdir(time_dirx.c_str(), 0777);
+        }
+        if(stat(time_diry.c_str(), &st) != 0){
+            mkdir(time_diry.c_str(), 0777);
+        }
+    }
+}
+
+
