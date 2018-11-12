@@ -126,7 +126,7 @@ MyDSMC::MyDSMC (double v0_rec, double akn_rec) {
     body_dy = (ybody2 - ybody1) / double(B_my);
 
 //繰り返し回数
-    nlast = 100;
+    nlast = 600;
 
 //サンプリングするステップ数
     nlp = 100;
@@ -511,7 +511,9 @@ int MyDSMC::dsmc()
         }
 
         //                                                          <<addiitonal    v_data_output
-        output_v_data(nstep);
+        if(nstep>0 && nstep<itr_datapick){
+            output_v_data(nstep);
+        }
     }
 
     //															5.9 calculate Cd

@@ -9,6 +9,7 @@
 #include <iostream> //入出力ライブラリ
 #include <fstream> //iostreamのファイル入出力をサポート
 #include <vector>       // ヘッダファイルインクルード
+// #include <omp.h>
 
 #include "mydef.h"		//define を集めてある場所
 #include "MyDSMC.h"
@@ -17,9 +18,11 @@ int main(){
     double v = 1000;
     double akn = 0.4;
 
-    MyDSMC calc(v, akn);
-    calc.dsmc();
-
+//    #pragma omp parallel for
+    for(int i = 0; i<100; i++){
+        MyDSMC calc(v, akn);
+        calc.dsmc();
+    }
     return 0;
 }
 

@@ -8,7 +8,7 @@
 #pragma once
 
 
-#define nmax 200000						//変動する粒子の個数を十分保持できる程度に大きく取る
+#define nmax 100000						//変動する粒子の個数を十分保持できる程度に大きく取る
 //格子の数
 #define mx 11
 #define my 11
